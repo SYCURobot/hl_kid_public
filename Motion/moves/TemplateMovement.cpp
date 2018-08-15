@@ -49,6 +49,7 @@ void TemplateMovement::onStop()
 }
 
 void TemplateMovement::step(float elapsed)
+{
   bind->pull();
   bind->push();
 }

@@ -1,0 +1,12 @@
+* Walk
+  - startMove("walk", 1.0);
+  - stopMove("walk", 0.3);
+  - walk->control(false);
+  - walk->control(true);
+  - walk->control(true,x,y,orientation); mm/step, mm/step, deg/step
+
+* Placer
+  - startMove("placer");
+  - stopMove("placer");
+  - placer->arrived
+  - placer->goTo(x,y,orientation); m, m, deg

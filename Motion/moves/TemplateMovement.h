@@ -3,8 +3,9 @@
 #include "STM.h"
 #include <string>
 
-class StandUp;
 class Walk;
+class Placer;
+class Approach;
 class TemplateMovement: public STM
 {
     public:
