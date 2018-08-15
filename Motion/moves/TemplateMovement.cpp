@@ -1,20 +1,11 @@
 #include "moves/TemplateMovement.h"
 
-#include "moves/Walk.h"
-#include "moves/Placer.h"
-#include "moves/Approach.h"
-
-
 #include <rhoban_utils/logging/logger.h>
-
-#define STATE_STARTING "starting"
-#define STATE_STOPING "stoping"
 
 static rhoban_utils::Logger logger("TemplateMovement");
 
 
-TemplateMovement::TemplateMovement(Walk *walk, Placer *placer, Approach *approach)
-  : walk(walk), placer(placer), approach(approach)
+TemplateMovement::TemplateMovement()
 {
   initializeBinding();
   bind->bindNew("parameter_0", rhio_parameter_0)
@@ -40,12 +31,10 @@ std::string TemplateMovement::getName()
 void TemplateMovement::onStart()
 {
   bind->pull();
-  setState(STATE_STARTING);
 }
 
 void TemplateMovement::onStop()
 {
-  setState(STATE_STOPING);
 }
 
 void TemplateMovement::step(float elapsed)
@@ -53,21 +42,3 @@ void TemplateMovement::step(float elapsed)
   bind->pull();
   bind->push();
 }
-
-
-void TemplateMovement::enterState(std::string state)
-{ 
-  if(state == STATE_STARTING){
-  }
-  if(state == STATE_STOPING){
-  }
-}
-
-void TemplateMovement::exitState(std::string state)
-{
-  if(state == STATE_STARTING){
-  }
-  if(state == STATE_STOPING){
-  }
-}
-

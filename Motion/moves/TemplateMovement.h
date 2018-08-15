@@ -1,29 +1,18 @@
 #pragma once
 
-#include "STM.h"
+#include "Move.h"
 #include <string>
 
-class Walk;
-class Placer;
-class Approach;
-class TemplateMovement: public STM
+class TemplateMovement: public Move
 {
     public:
-        TemplateMovement(Walk *walk, Placer *placer, Approach *approach);
+        TemplateMovement();
         std::string getName();
         void onStart();
         void onStop();
         void step(float elapsed);
-        bool isFallen();
-        bool isHandled();
 
     protected:
-        Walk *walk;
-        Placer *placer;
-        Approach *approach;
-
-        void enterState(std::string state);
-        void exitState(std::string state);
 
         bool rhio_parameter_0;
         int rhio_parameter_1;

@@ -32,6 +32,7 @@
 
 #include "ReactiveKicker.h"
 #include "TemplateMovement.h"
+#include "TemplateSTM.h"
 
 #include "MDPKickController.h"
 #include "QKickController.h"
@@ -109,6 +110,9 @@ Moves::Moves(MoveScheduler* scheduler) :
 
     add(new ReactiveKicker(walk));
     add(new AutonomousPlaying(walk, standup));
+
+    add(new TemplateMovement);
+    add(new TemplateSTM(walk, placer, approach));
 }
 
 Moves::~Moves()
