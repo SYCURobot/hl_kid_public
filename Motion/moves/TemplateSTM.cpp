@@ -34,7 +34,7 @@ TemplateSTM::TemplateSTM(Walk *walk, Placer *placer, Approach *approach)
 
 std::string TemplateSTM::getName()
 {
-  return "template_movement";
+  return "template_stm";
 }
 
 void TemplateSTM::onStart()
