@@ -32,6 +32,8 @@ set (SOURCES
     GoalKick.cpp
 
     ReactiveKicker.cpp
+
+    TemplateMovement.cpp
 )
 
 if (BUILD_KID_SIZE_VISION)

@@ -31,6 +31,7 @@
 #include "AutonomousPlaying.h"
 
 #include "ReactiveKicker.h"
+#include "TemplateMovement.h"
 
 #include "MDPKickController.h"
 #include "QKickController.h"
