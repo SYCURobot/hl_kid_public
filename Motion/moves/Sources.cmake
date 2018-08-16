@@ -34,6 +34,7 @@ set (SOURCES
     ReactiveKicker.cpp
 
     TemplateMovement.cpp
+    TemplateMovementSplines.cpp
     TemplateSTM.cpp
 )
 

@@ -15,6 +15,10 @@ class TemplateMovement: public Move
     protected:
 
         bool rhio_parameter_0;
-        int rhio_parameter_1;
-        float rhio_parameter_2;
+  float rhio_parameter_1;
+  float rhio_parameter_2;
+  float angle;
+  
+  float t;
+  
 };

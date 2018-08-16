@@ -1,3 +1,6 @@
+* Motors
+  - setTorqueLimit("motor_name", torque)
+  - setAngle(angle) deg
 * Walk
   - startMove("walk", 1.0);
   - stopMove("walk", 0.3);
