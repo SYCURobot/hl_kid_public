@@ -26,6 +26,7 @@ std::string TemplateBehaviour::getName()
 void TemplateBehaviour::onStart()
 {
   bind->pull();
+  startMove("placer");
   startMove("walk", 1.0);
   state = 0;
 }
@@ -39,27 +40,36 @@ void TemplateBehaviour::step(float elapsed)
   bind->pull();
 
   if(state == 0){
-    walk->control(false);
-    logger.log("Walk disabled.");
+    placer->goTo(0,0,0);
   }
   if(state == 1){
-    walk->control(true);
-    logger.log("Walk enabled.");
+    placer->goTo(2,2,0);
+    logger.log("goTo 2 2 0");
   }
   if(state == 2){
-    walk->control(true, 100, 0, 0);
-    logger.log("Go forward.");
+    placer->goTo(-2,2,0);
+    logger.log("goTo -2 2 0");
   }
   if(state == 3){
-    walk->control(true, 0, 100, 0);
-    logger.log("Go left.");
+    placer->goTo(-2,-2,0);
+    logger.log("goTo -2 -2 0");
   }
   if(state == 4){
-    walk->control(true, 0, 0, 10);
-    logger.log("Turn.");
+    placer->goTo(2,-2,0);
+    logger.log("goTo 2 -2 0");
   }
-
-
+  if(state == 5){
+    placer->goTo(0,0,90);
+    logger.log("goTo 0 0 90");
+  }
+  if(state == 6){
+    placer->goTo(1,0,120);
+    logger.log("goTo 1 0 120");
+  }
+  if(state == 7){
+    placer->goTo(1.5,0,120);
+    logger.log("goTo 1 0 120");
+  }
 
   bind->push();
 }
