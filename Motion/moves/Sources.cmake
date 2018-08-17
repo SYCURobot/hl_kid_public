@@ -35,6 +35,7 @@ set (SOURCES
 
     TemplateMovement.cpp
     TemplateMovementSplines.cpp
+    TemplateBehaviour.cpp
     TemplateSTM.cpp
 )
 
