@@ -19,7 +19,9 @@ TemplateSTM::TemplateSTM(Walk *walk, Placer *placer, Approach *approach)
   : walk(walk), placer(placer), approach(approach)
 {
   initializeBinding();
-  bind->bindNew("state", state);
+    // State
+    bind->bindNew("state", STM::state, RhIO::Bind::PushOnly)
+        ->comment("TemplateSTM state");
 }
 
 std::string TemplateSTM::getName()
@@ -30,9 +32,9 @@ std::string TemplateSTM::getName()
 void TemplateSTM::onStart()
 {
   bind->pull();
-  setState(STATE_GO_TO_BALL);
   startMove("placer");
   startMove("walk", 1.0);
+  setState(STATE_GO_TO_BALL);
 }
 
 void TemplateSTM::onStop()
@@ -47,6 +49,7 @@ void TemplateSTM::step(float elapsed)
   if(state == STATE_GO_TO_BALL){
     if(!placer->arrived){
       auto ball = loc->getBallPosField();
+      logger.log("Ball : x=%d y=%d", ball.x, ball.y);
       placer->goTo(ball.x, ball.y, 0);
     }
     else{
@@ -72,9 +75,11 @@ void TemplateSTM::enterState(std::string state)
   if(state == STATE_GO_TO_BALL){
     auto ball = loc->getBallPosField();
     placer->goTo(ball.x, ball.y, 0);
+    placer->arrived = false;
   }
   if(state == STATE_GO_TO_CENTER){
     placer->goTo(0,0,0);
+    placer->arrived = false;
   }
 }
 
