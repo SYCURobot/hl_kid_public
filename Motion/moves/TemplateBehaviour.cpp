@@ -5,6 +5,8 @@
 #include "moves/Approach.h"
 
 
+#include <services/LocalisationService.h>
+#include <rhoban_geometry/point.h>
 #include <rhoban_utils/logging/logger.h>
 
 static rhoban_utils::Logger logger("TemplateBehaviour");
@@ -44,18 +46,30 @@ void TemplateBehaviour::step(float elapsed)
   }
   if(state == 1){
     placer->goTo(2,2,0);
+    if(placer->arrived){
+      state = 2;
+    }
     logger.log("goTo 2 2 0");
   }
   if(state == 2){
     placer->goTo(-2,2,0);
+    if(placer->arrived){
+      state = 3;
+    }
     logger.log("goTo -2 2 0");
   }
   if(state == 3){
     placer->goTo(-2,-2,0);
+    if(placer->arrived){
+      state = 4;
+    }
     logger.log("goTo -2 -2 0");
   }
   if(state == 4){
     placer->goTo(2,-2,0);
+    if(placer->arrived){
+      state = 2;
+    }
     logger.log("goTo 2 -2 0");
   }
   if(state == 5){
@@ -66,9 +80,27 @@ void TemplateBehaviour::step(float elapsed)
     placer->goTo(1,0,120);
     logger.log("goTo 1 0 120");
   }
-  if(state == 7){
-    placer->goTo(1.5,0,120);
-    logger.log("goTo 1 0 120");
+
+  //////////////////////
+  //
+  auto loc = getServices()->localisation;
+
+  if(state == 9){
+    if(placer->arrived){
+      state = 10;
+    }
+    auto ball = loc->getBallPosField();
+    placer->goTo(ball.x, ball.y, 0);
+    logger.log("goTo ball");
+  }
+  else{
+    if(state == 10){
+      if(placer->arrived){
+        state = 9;
+      }
+      placer->goTo(0, 0, 0);
+      logger.log("goTo center");
+    }
   }
 
   bind->push();

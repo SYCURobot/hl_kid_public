@@ -21,8 +21,6 @@ class TemplateBehaviour: public Move
         Placer *placer;
         Approach *approach;
 
-        void enterState(std::string state);
-        void exitState(std::string state);
 
         bool rhio_parameter_0;
         int rhio_parameter_1;
