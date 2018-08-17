@@ -4,11 +4,13 @@
 #include "moves/Placer.h"
 #include "moves/Approach.h"
 
+#include <services/LocalisationService.h>
+#include <rhoban_geometry/point.h>
 
 #include <rhoban_utils/logging/logger.h>
 
-#define STATE_STARTING "starting"
-#define STATE_STOPING "stoping"
+#define STATE_GO_TO_BALL "go_to_ball"
+#define STATE_GO_TO_CENTER "go_to_center"
 
 static rhoban_utils::Logger logger("TemplateSTM");
 
@@ -17,57 +19,72 @@ TemplateSTM::TemplateSTM(Walk *walk, Placer *placer, Approach *approach)
   : walk(walk), placer(placer), approach(approach)
 {
   initializeBinding();
-  bind->bindNew("parameter_0", rhio_parameter_0)
-    ->comment("parameter 0")
-    ->defaultValue(true);
-
-  bind->bindNew("parameter_1", rhio_parameter_1, RhIO::Bind::PushOnly)
-    ->comment("parameter 1")
-    ->defaultValue(2)
-    ->minimum(-1)
-    ->maximum(10);
-
-  bind->bindNew("parameter_2", rhio_parameter_2, RhIO::Bind::PullOnly)
-    ->comment("parameter 2")
-    ->defaultValue(1.3);
+  logger.log("Biding state");
+  bind->bindNew("state", state);
+  startMove("placer");
+  startMove("walk", 1.0);
 }
 
 std::string TemplateSTM::getName()
 {
+  logger.log("Getting name");
   return "template_stm";
 }
 
 void TemplateSTM::onStart()
 {
   bind->pull();
-  setState(STATE_STARTING);
+  setState(STATE_GO_TO_BALL);
 }
 
 void TemplateSTM::onStop()
 {
-  setState(STATE_STOPING);
 }
 
 void TemplateSTM::step(float elapsed)
 {
   bind->pull();
+  auto loc = getServices()->localisation;
+
+  if(state == STATE_GO_TO_BALL){
+    if(!placer->arrived){
+      auto ball = loc->getBallPosField();
+      placer->goTo(ball.x, ball.y, 0);
+    }
+    else{
+      setState(STATE_GO_TO_CENTER);
+    }
+  }
+  if(state == STATE_GO_TO_CENTER){
+    if(!placer->arrived){
+      placer->goTo(0, 0, 0);
+    }
+    else{
+      setState(STATE_GO_TO_BALL);
+    }
+  }
   bind->push();
 }
 
 
 void TemplateSTM::enterState(std::string state)
 { 
-  if(state == STATE_STARTING){
+  auto loc = getServices()->localisation;
+
+  if(state == STATE_GO_TO_BALL){
+    auto ball = loc->getBallPosField();
+    placer->goTo(ball.x, ball.y, 0);
   }
-  if(state == STATE_STOPING){
+  if(state == STATE_GO_TO_CENTER){
+    placer->goTo(0,0,0);
   }
 }
 
 void TemplateSTM::exitState(std::string state)
 {
-  if(state == STATE_STARTING){
+  if(state == STATE_GO_TO_BALL){
   }
-  if(state == STATE_STOPING){
+  if(state == STATE_GO_TO_CENTER){
   }
 }
 
