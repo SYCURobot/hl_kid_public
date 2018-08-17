@@ -49,7 +49,6 @@ void TemplateSTM::step(float elapsed)
   if(state == STATE_GO_TO_BALL){
     if(!placer->arrived){
       auto ball = loc->getBallPosField();
-      logger.log("Ball : x=%d y=%d", ball.x, ball.y);
       placer->goTo(ball.x, ball.y, 0);
     }
     else{
