@@ -13,3 +13,7 @@
   - stopMove("placer");
   - placer->arrived
   - placer->goTo(x,y,orientation); m, m, deg
+* Localisation 
+  - auto loc = getServices()->localisation;
+  - auto ball = loc->getBallPosField();
+  - auto ball = loc->getBallPosSelf();
