@@ -19,15 +19,11 @@ TemplateSTM::TemplateSTM(Walk *walk, Placer *placer, Approach *approach)
   : walk(walk), placer(placer), approach(approach)
 {
   initializeBinding();
-  logger.log("Biding state");
   bind->bindNew("state", state);
-  startMove("placer");
-  startMove("walk", 1.0);
 }
 
 std::string TemplateSTM::getName()
 {
-  logger.log("Getting name");
   return "template_stm";
 }
 
@@ -35,6 +31,8 @@ void TemplateSTM::onStart()
 {
   bind->pull();
   setState(STATE_GO_TO_BALL);
+  startMove("placer");
+  startMove("walk", 1.0);
 }
 
 void TemplateSTM::onStop()
