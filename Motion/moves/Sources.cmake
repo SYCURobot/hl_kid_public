@@ -36,6 +36,7 @@ set (SOURCES
     TemplateMovement.cpp
     TemplateMovementSplines.cpp
     TemplateSTM.cpp
+    Legup.cpp
 )
 
 if (BUILD_KID_SIZE_VISION)
