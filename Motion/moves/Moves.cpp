@@ -35,6 +35,7 @@
 #include "TemplateMovementSplines.h"
 #include "TemplateBehaviour.h"
 #include "TemplateSTM.h"
+#include "Legup.h"
 
 #include "MDPKickController.h"
 #include "QKickController.h"
@@ -115,7 +116,11 @@ Moves::Moves(MoveScheduler* scheduler) :
 
     add(new TemplateMovement);
     add(new TemplateMovementSplines);
+
+    add(new Legup);   
     add(new TemplateBehaviour(walk, placer, approach));
+
+
     add(new TemplateSTM(walk, placer, approach));
 }
 
