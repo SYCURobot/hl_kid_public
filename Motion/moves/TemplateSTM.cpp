@@ -76,11 +76,11 @@ void TemplateSTM::enterState(std::string state)
   if(state == STATE_GO_TO_BALL){
     auto ball = loc->getBallPosField();
     placer->goTo(ball.x, ball.y, 0);
-    placer->arrived = false;
+    placer->updateArrived();
   }
   if(state == STATE_GO_TO_CENTER){
     placer->goTo(0,0,0);
-    placer->arrived = false;
+    placer->updateArrived();
   }
 }
 

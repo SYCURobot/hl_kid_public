@@ -26,6 +26,11 @@ class Placer : public Move
         //void restoreMarginAzimuth();
 
         bool arrived;
+
+        // Note: "arrived" is not updated in the function goTo, we have to wait the next tick of Placer.
+        // This methode was created to force the update if the user wants to while beeing not breaking
+        // the existing code.
+        void updateArrived();
         
         // Temporary target
         float tmpX, tmpY;
