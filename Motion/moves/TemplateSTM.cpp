@@ -39,6 +39,8 @@ void TemplateSTM::onStart()
 
 void TemplateSTM::onStop()
 {
+  stopMove("placer");
+  stopMove("walk", 1.0);
 }
 
 void TemplateSTM::step(float elapsed)
