@@ -33,14 +33,12 @@ void TemplateSTM::onStart()
 {
   bind->pull();
   startMove("placer");
-  startMove("walk", 1.0);
   setState(STATE_GO_TO_BALL);
 }
 
 void TemplateSTM::onStop()
 {
   stopMove("placer");
-  stopMove("walk", 1.0);
 }
 
 void TemplateSTM::step(float elapsed)
