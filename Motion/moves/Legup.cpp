@@ -44,6 +44,7 @@ void Legup::onStart()
 
 void Legup::onStop()
 {
+  splines.clear();
 }
 
 void Legup::step(float elapsed)
