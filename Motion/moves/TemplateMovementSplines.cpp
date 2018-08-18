@@ -45,6 +45,7 @@ void TemplateMovementSplines::onStart()
 
 void TemplateMovementSplines::onStop()
 {
+    splines.clear();
 }
 
 void TemplateMovementSplines::step(float elapsed)

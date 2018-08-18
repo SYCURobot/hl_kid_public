@@ -132,6 +132,47 @@ void Placer::goTo(float x, float y, float azimuth,
     obstacles = obstacles_;
 }
 
+void Placer::updateArrived(){
+    bind->pull();
+    auto loc = getServices()->localisation;
+    auto pos = loc->getFieldPos();//[m]
+    Angle cap(rad2deg(loc->getFieldOrientation()));
+
+    // Target point on the field
+    Point target(targetX, targetY);
+
+    // Computing error in the robot basis
+    Point error = (target - pos).rotation(-cap);
+    errorX = error.x;
+    errorY = error.y;
+
+    // Azimuth to face the target
+    capToTarget = Angle::fromXY(error.x, error.y).getSignedValue();
+
+    // Error azimuth to the target azimuth
+    errorAzimuth = (Angle(targetAzimuth) - cap).getSignedValue();
+
+    bool goodPosition = fabs(errorX) < marginX && fabs(errorY) < marginY;
+    bool goodPositionRestart = fabs(errorX) < marginX*hysteresis && fabs(errorY) < marginY*hysteresis;
+    bool goodAlignment = fabs(errorAzimuth) < marginAzimuth;
+    bool goodAlignmentRestart = fabs(errorAzimuth) < marginAzimuth*hysteresis;
+
+    // Has the robot arrived to destination?
+    if (arrived) {
+        if (!goodPositionRestart || !goodAlignmentRestart) {
+            logger.log("I am too far from destination, I'm on my way: errorX: %f, errorY: %f",
+                    errorX, errorY);
+            arrived = false;
+        }
+    } else {
+        if (goodPosition && goodAlignment) {
+            logger.log("I consider that I reached destination: errorX: %f, errorY: %f, errorAzimuth %f",
+                    errorX, errorY, errorAzimuth);
+            arrived = true;
+        }
+    }
+}
+
 std::string Placer::getName()
 {
     return "placer";
@@ -188,25 +229,7 @@ void Placer::step(float elapsed)
     // Error azimuth to the target azimuth
     errorAzimuth = (Angle(targetAzimuth) - cap).getSignedValue();
 
-    bool goodPosition = fabs(errorX) < marginX && fabs(errorY) < marginY;
-    bool goodPositionRestart = fabs(errorX) < marginX*hysteresis && fabs(errorY) < marginY*hysteresis;
-    bool goodAlignment = fabs(errorAzimuth) < marginAzimuth;
-    bool goodAlignmentRestart = fabs(errorAzimuth) < marginAzimuth*hysteresis;
-
-    // Has the robot arrived to destination?
-    if (arrived) {
-        if (!goodPositionRestart || !goodAlignmentRestart) {
-            logger.log("I am too far from destination, I'm on my way: errorX: %f, errorY: %f",
-                    errorX, errorY);
-            arrived = false;
-        }
-    } else {
-        if (goodPosition && goodAlignment) {
-            logger.log("I consider that I reached destination: errorX: %f, errorY: %f, errorAzimuth %f",
-                    errorX, errorY, errorAzimuth);
-            arrived = true;
-        }
-    }
+    updateArrived();
 
     if (arrived) dontWalk = true;
 

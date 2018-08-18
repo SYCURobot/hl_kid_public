@@ -29,6 +29,7 @@
 // #include "KickCalibration.hpp"
 #include "GoalKick.hpp"
 #include "AutonomousPlaying.h"
+#include "AutonomousBehaviour.h"
 
 #include "ReactiveKicker.h"
 #include "TemplateMovement.h"
@@ -113,6 +114,7 @@ Moves::Moves(MoveScheduler* scheduler) :
 
     add(new ReactiveKicker(walk));
     add(new AutonomousPlaying(walk, standup));
+    add(new AutonomousBehaviour(walk, standup, head));
 
     add(new TemplateMovement);
     add(new TemplateMovementSplines);

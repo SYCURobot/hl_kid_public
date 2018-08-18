@@ -38,6 +38,7 @@ set (SOURCES
     TemplateBehaviour.cpp
     TemplateSTM.cpp
     Legup.cpp
+    AutonomousBehaviour.cpp
 )
 
 if (BUILD_KID_SIZE_VISION)

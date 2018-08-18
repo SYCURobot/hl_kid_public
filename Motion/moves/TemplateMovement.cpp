@@ -47,5 +47,10 @@ void TemplateMovement::step(float elapsed)
 
   bind->pull();
   t+=elapsed;
+  // rhio_parameter_1=t;
+  setTorqueLimit("right_shoulder_pitch", 1.0);
+  float pitch=sin(2.0*M_PI*rhio_parameter_2*t)*rhio_parameter_1;
+  angle=pitch;
+  Move::setAngle("right_shoulder_pitch", pitch);
   bind->push();
 }
