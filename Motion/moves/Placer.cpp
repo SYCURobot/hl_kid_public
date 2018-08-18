@@ -134,7 +134,6 @@ void Placer::goTo(float x, float y, float azimuth,
 
 void Placer::updateArrived(){
     bind->pull();
-    logger.log("Targets: %f %f", targetX, targetY);
     auto loc = getServices()->localisation;
     auto pos = loc->getFieldPos();//[m]
     Angle cap(rad2deg(loc->getFieldOrientation()));
