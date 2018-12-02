@@ -17,5 +17,6 @@ class TemplateMovementSplines: public Move
 
     float time;
     float t_max;
+    int   times;
     std::map<std::string, rhoban_utils::Function> splines;
 };

@@ -36,6 +36,7 @@
 #include "TemplateMovementSplines.h"
 #include "TemplateBehaviour.h"
 #include "TemplateSTM.h"
+#include "Templategoalkeeper.h"
 #include "Legup.h"
 
 #include "MDPKickController.h"
@@ -124,6 +125,7 @@ Moves::Moves(MoveScheduler* scheduler) :
 
 
     add(new TemplateSTM(walk, placer, approach));
+    add(new Templategoalkeeper(walk, placer, approach));
 }
 
 Moves::~Moves()

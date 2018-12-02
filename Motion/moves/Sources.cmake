@@ -25,10 +25,8 @@ set (SOURCES
     Placer.cpp
     Kick.cpp
     # LateralStep.cpp
-
     LogMachine.cpp
     KickPhilipp.cpp
-
     GoalKick.cpp
 
     ReactiveKicker.cpp
@@ -38,7 +36,10 @@ set (SOURCES
     TemplateBehaviour.cpp
     TemplateSTM.cpp
     Legup.cpp
+
     AutonomousBehaviour.cpp
+    Templategoalkeeper.cpp
+
 )
 
 if (BUILD_KID_SIZE_VISION)

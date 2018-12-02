@@ -25,6 +25,7 @@ void TemplateMovementSplines::onStart()
   bind->pull();
 
   time = 0.0;
+  times= 0;
 
   try { 
     splines = Function::fromFile("new_movement.json");
@@ -56,12 +57,18 @@ void TemplateMovementSplines::step(float elapsed)
   time += elapsed*splines["remap"].get(time);
   if(time > t_max)
   {
+    time=0.0;
+    times += 1;
+    //this->Move::stop();
+  }
+  else if(times == 3)
+  {
     this->Move::stop();
   }
   else
   {
-    setAngle("left_shoulder_pitch", splines["shoulder_pitch"].get(time));
-    setAngle("right_shoulder_pitch", splines["shoulder_pitch"].get(time));
+    setAngle("right_hip_pitch", splines["hip_pitch"].get(time));
+    setAngle("right_knee", splines["right_knee"].get(time));
   }
   bind->push();
 }
