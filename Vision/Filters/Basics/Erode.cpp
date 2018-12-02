@@ -10,8 +10,8 @@ void Erode::setParameters() {
   kWidth = ParamInt(5, 1, 11);
   kHeight = ParamInt(5, 1, 11);
   params()->define<ParamInt>("Shape", &shape);
-  params()->define<ParamInt>("kernel width", &kWidth);
-  params()->define<ParamInt>("kernel height", &kHeight);
+  params()->define<ParamInt>("kernel_width", &kWidth);
+  params()->define<ParamInt>("kernel_height", &kHeight);
 }
 
 void Erode::process() {

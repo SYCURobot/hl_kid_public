@@ -9,6 +9,7 @@
 #include "Obstacles/ObstacleFactory.hpp"
 #include "Patches/PatchFactory.hpp"
 #include "Source/SourceFactory.hpp"
+#include "Templates/TemplateFactory.hpp"
 
 #include <exception>
 #include <string>
@@ -27,6 +28,7 @@ FilterFactory::FilterFactory() {
   registerObstacleFilters(this);
   registerPatchFilters(this);
   registerSourceFilters(this);
+  registerTemplateFilters(this);
 }
 
 }

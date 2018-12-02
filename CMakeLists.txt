@@ -26,18 +26,18 @@ catkin_package(
 option (BUILD_KID_SIZE_VISION "Build the Vision" ON)
 option (BUILD_VISION_OPENCL "Build vision with OpenCL support" OFF)
 option (BUILD_KID_SIZE_PROGRAM_VISION "Enable the build of Vision Programs" OFF)
-option (BUILD_KID_SIZE_PROGRAM_STRATEGY "Enable the build of Strategy programs" OFF)
+option (BUILD_KID_SIZE_PROGRAM_STRATEGY "Enable the build of Strategy programs" ON)
 
 #Define Vision enable Macro + specific includes
 if (BUILD_KID_SIZE_VISION)
   enable_language(ASM)
   add_definitions(-DVISION_COMPONENT)
   add_definitions(-DENABLE_OPENCV)
-  set (OpenCV_DIR /home/gregwar/opencv/build/)
-  find_package(OpenCV REQUIRED)
-  include_directories(${OpenCV_DIR}/include)
-  include_directories(${OpenCV_DIR}/include/opencv2)
-  link_directories(${OpenCV_DIR}/lib ${OpenCV_DIR}/3rdparty/lib)
+  #set (OpenCV_DIR /home/gregwar/opencv/build/)
+  find_package(OpenCV 2.4.9.1 EXACT REQUIRED)
+  #include_directories(${OpenCV_DIR}/include)
+  #include_directories(${OpenCV_DIR}/include/opencv2)
+  #link_directories(${OpenCV_DIR}/lib ${OpenCV_DIR}/3rdparty/lib)
 
   # Use SSE2 and AVX if provided, otherwise, show a warning
   if ("${CMAKE_CXX_FLAGS}" MATCHES "-msse2" AND
@@ -116,6 +116,7 @@ if (BUILD_KID_SIZE_VISION)
     Vision/Field
     Vision/Filters
     Vision/Filters/Ball
+    Vision/Filters/Templates
     Vision/Filters/Basics
     Vision/Filters/Colors
     Vision/Filters/Custom
