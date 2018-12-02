@@ -158,6 +158,21 @@ In order to change the exposure time, the procedure is the following:
 4. Once the parameters are satisfying, modify the *all.json* file to make sur
    that changes will be taken into account
 
+**** Tuning of various important filter
+
+1. green
+   - this filter detects the field green. It is used by various other filters.
+     You should tune the min/max Y/U/V value in order to select the field green color (view Vision/green/out)
+2. white
+   - this filter detects the white. It is used by various other filters.
+     You should tune the Y threshold in order to select the white (view Vision/white/out)
+3. white_line_color
+   - this filter detects the field line white.
+     You should tune the Y threshold in order to select the white line (view Vision/white_line_color/out)
+4. black
+   - this filter detects the black.
+     same kind of tuning than for green
+
 **** Training new neural network
 The quality of the neural network can be improved by adding more data. We will
 describe the procedure to use for improving the quality of the classification.
