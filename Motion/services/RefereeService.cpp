@@ -20,12 +20,10 @@ RefereeService::RefereeService()
     bind->bindNew("id", id, RhIO::Bind::PullOnly)
         ->comment("The robot ID")
         ->defaultValue(0)
-        ->persisted(true)
         ;
     bind->bindNew("teamId", teamId, RhIO::Bind::PullOnly)
         ->comment("The team ID")
         ->defaultValue(0)
-        ->persisted(true)
         ;
     bind->bindNew("force", force, RhIO::Bind::PullOnly)
         ->comment("Force the playing to true")
