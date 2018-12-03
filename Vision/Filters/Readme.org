@@ -1,6 +1,15 @@
 # Filters
 
 * How to
+** Manage the filters in [[https://github.com/SYCURobot/environments_public/tree/master/common/vision_filters][env/common/vision_filters]]
+In a robot environement the vision_config.json file should be a symbolic link towards
+the main vision configuration file. Usually it is
+[[https://github.com/SYCURobot/environments_public/tree/master/common/vision_filters/all.json][env/common/vision_filters/all.json]],
+but for the [[https://github.com/SYCURobot/environments_public/tree/master/fake][fake]] robot for example it is [[https://github.com/SYCURobot/environments_public/tree/master/common/vision_filters/all.json][env/common/vision_filters/all_fake.json]].
+To add a new filter, you can add it to existing filter collection as 
+[[https://github.com/SYCURobot/environments_public/tree/master/common/vision_filters/ball_detection.json][env/common/vision_filters/ball_detection.json]] or
+[[https://github.com/SYCURobot/environments_public/tree/master/common/vision_filters/ball_detection.json][env/common/vision_filters/colors.json]], or you can create a new collection
+that should be added in the field 'paths' of the main vision configuration file.
 ** Add a new filter folder
 Follow one of the existing folders as an example.
   1. Create your folder in [[.][hl_kid_public/Vision/Filters]].
