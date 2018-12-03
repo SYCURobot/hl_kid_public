@@ -10,6 +10,7 @@
 #include "Patches/PatchFactory.hpp"
 #include "Source/SourceFactory.hpp"
 #include "Templates/TemplateFactory.hpp"
+#include "RobotDetection/RobotDetectionFactory.hpp"
 
 #include <exception>
 #include <string>
@@ -29,6 +30,7 @@ FilterFactory::FilterFactory() {
   registerPatchFilters(this);
   registerSourceFilters(this);
   registerTemplateFilters(this);
+  registerRobotDetectionFilters(this);
 }
 
 }
