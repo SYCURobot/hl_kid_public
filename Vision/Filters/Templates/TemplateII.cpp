@@ -42,6 +42,11 @@ void TemplateII::setParameters() {
   params()->define<ParamInt>("decimationRate", &decimationRate);
   params()->define<ParamInt>("tagLevel", &tagLevel);
   params()->define<ParamInt>("useLocalSearch", &useLocalSearch);
+
+  params()->define<ParamFloat>("yWeight", &yWeight);
+  params()->define<ParamFloat>("greenWeight", &greenWeight);
+  yWeight = ParamFloat(10.0,0.0,20.0);
+  greenWeight = ParamFloat(1.0,0.0,20.0);
 }
 
 void TemplateII::process() {
@@ -288,6 +293,13 @@ cv::Rect_<float> TemplateII::getBoundaryPatch(int x, int y, float radius)
   return cv::Rect_<float>(center - halfSize, center + halfSize);
 }
 
+cv::Rect_<float> TemplateII::getInnerPatch(int x, int y, float radius)
+{
+  // Creating boundary patch
+  cv::Point2f center(x,y);
+  return cv::Rect_<float>(center - cv::Point2f(radius,radius), center + cv::Point2f(radius,radius));
+}
+
 
 double TemplateII::getPatchScore(const cv::Rect & patch,
                                const cv::Mat & integralImage) {
@@ -315,13 +327,27 @@ double TemplateII::getPatchScore(const cv::Rect & patch,
 
 double TemplateII::getCandidateScore(int center_x, int center_y, double radius,
                                    const cv::Mat & yImg, const cv::Mat & greenImg) {
+  // Computing inner patches
+  cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x, center_y, radius);
+  cv::Rect_<float> innerPatch = getInnerPatch(center_x, center_y, radius);
+
+  // Abreviations are the following:
+  // ia: inner above
+  // ib: inner below
+  // b : boundary
+  // ub: upper boundary
+
   // Computing y_score
-  // TODO
+  double y_b  = getPatchScore(boundaryPatch, yImg);
+  double y_i = getPatchScore(innerPatch, yImg);
+  double y_score =  y_i - y_b;
 
   // Computing green_score
-  // TODO
+  double green_b = getPatchScore(boundaryPatch, greenImg);
+  double green_i = getPatchScore(innerPatch, greenImg);
+  double green_score = green_b - green_i;
 
-  return 0;
+  return (yWeight * y_score + greenWeight * green_score) / (yWeight + greenWeight);
 }
 
 void TemplateII::fillScore(cv::Mat & img, int score,
