@@ -37,7 +37,9 @@ public:
 
   virtual std::string getClassName() const override { return "RobotDetectionFilter"; }
 
-  ParamInt min0, min1, min2, max0, max1, max2;
+  ParamFloat minArea, maxArea;
+
+  virtual int expectedDependencies() const override;
 
 protected:
   /**
