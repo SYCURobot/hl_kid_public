@@ -1,4 +1,4 @@
-#include "TemplateII.hpp"
+#include "ObjectByII.hpp"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "rhoban_utils/timing/benchmark.h"
@@ -14,21 +14,20 @@ using rhoban_utils::Benchmark;
 namespace Vision {
 namespace Filters {
 
-std::string TemplateII::getClassName() const {
-  return "TemplateII";
+std::string ObjectByII::getClassName() const {
+  return "ObjectByII";
 }
 
-int TemplateII::expectedDependencies() const {
+int ObjectByII::expectedDependencies() const {
   return 3;
 }
 
 
-void TemplateII::setParameters() {
+void ObjectByII::setParameters() {
   boundaryFactor = ParamFloat(2.0,1.0,3.0);
   maxBoundaryThickness = ParamFloat(30.0,1.0,100.0);
-  minRadius = ParamFloat(2.0,0.5,20.0);
+  minSize = ParamFloat(2.0,0.5,100.0);
   minScore = ParamFloat(100.0,0.0,510.);
-  boundaryFactor = ParamFloat(2.0,1.0,3.0);
   maxRois = ParamInt(4,1,100);
   decimationRate = ParamInt(1,1,20);
   tagLevel = ParamInt(0,0,1);
@@ -36,28 +35,29 @@ void TemplateII::setParameters() {
 
   params()->define<ParamFloat>("boundaryFactor", &boundaryFactor);
   params()->define<ParamFloat>("maxBoundaryThickness", &maxBoundaryThickness);
-  params()->define<ParamFloat>("minRadius", &minRadius);
+  params()->define<ParamFloat>("minSize", &minSize);
   params()->define<ParamFloat>("minScore", &minScore);
   params()->define<ParamInt>("maxRois", &maxRois);
   params()->define<ParamInt>("decimationRate", &decimationRate);
   params()->define<ParamInt>("tagLevel", &tagLevel);
   params()->define<ParamInt>("useLocalSearch", &useLocalSearch);
 
+  // Modify here
   params()->define<ParamFloat>("yWeight", &yWeight);
   params()->define<ParamFloat>("greenWeight", &greenWeight);
   yWeight = ParamFloat(10.0,0.0,20.0);
   greenWeight = ParamFloat(1.0,0.0,20.0);
 }
 
-void TemplateII::process() {
+void ObjectByII::process() {
   // Get names of dependencies
   const std::string & yName = _dependencies[0];
   const std::string & greenName = _dependencies[1];
-  const std::string & radiusProviderName = _dependencies[2];
+  const std::string & sizeProviderName = _dependencies[2];
   // Import source matrix 
   const cv::Mat & yImg = *(getDependency(yName).getImg());
   const cv::Mat & greenImg = *(getDependency(greenName).getImg());
-  const cv::Mat & radiusImg = *(getDependency(radiusProviderName).getImg());
+  const cv::Mat & sizeImg = *(getDependency(sizeProviderName).getImg());
 
   // Integral images have 1 line and 1 column more than resulting image
   rows = yImg.rows - 1;
@@ -71,7 +71,7 @@ void TemplateII::process() {
   double imgMinScore = 0;
   double imgMaxScore = 0;
 
-  const cv::Size & size = yImg.size();
+  const cv::Size & imgSize = yImg.size();
 
   Benchmark::open("computing decimated scores");
 
@@ -96,20 +96,20 @@ void TemplateII::process() {
       int center_y = (start_y + end_y) / 2; 
 
       // Computing boundary patch
-      float radius = radiusImg.at<float>(center_y,center_x);
-      cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x,center_y, radius);
+      float size = sizeImg.at<float>(center_y,center_x);
+      cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x,center_y, size);
 
-      // If area is not entirely inside the image or expected radius is too small:
+      // If area is not entirely inside the image or expected size is too small:
       // - Skip ROI and use a '0' score
-      if (!Utils::isContained(boundaryPatch, size) ||
-          radius <= minRadius) {
+      if (!Utils::isContained(boundaryPatch, imgSize) ||
+          size <= minSize) {
         if (tagLevel > 0) {
           fillScore(scores, 0, start_x, end_x, start_y, end_y);
         }
         continue;
       }
 
-      double score = getCandidateScore(center_x, center_y, radius, yImg, greenImg);
+      double score = getCandidateScore(center_x, center_y, size, yImg, greenImg);
 
       // Write score in scores map
       if (tagLevel > 0) {
@@ -220,10 +220,10 @@ void TemplateII::process() {
         for (int yOffset = -maxOffset; yOffset <= maxOffset; yOffset++) {
           int new_center_x = center_x + xOffset;
           int new_center_y = center_y + yOffset;
-          float radius = radiusImg.at<float>(new_center_y,new_center_x);
-          cv::Rect newPatch = getBoundaryPatch(new_center_x,new_center_y, radius);
-          if (!Utils::isContained(newPatch, size)) continue;
-          double score = getCandidateScore(new_center_x, new_center_y, radius, yImg, greenImg);
+          float size = sizeImg.at<float>(new_center_y,new_center_x);
+          cv::Rect newPatch = getBoundaryPatch(new_center_x,new_center_y, size);
+          if (!Utils::isContained(newPatch, imgSize)) continue;
+          double score = getCandidateScore(new_center_x, new_center_y, size, yImg, greenImg);
           if (score > bestScore) {
             bestScore = score;
             bestPatch = newPatch;
@@ -250,7 +250,7 @@ void TemplateII::process() {
   Benchmark::close("getHeatMap");
 }
 
-cv::Mat TemplateII::getHeatMap(const cv::Mat & scores,
+cv::Mat ObjectByII::getHeatMap(const cv::Mat & scores,
                              double imgMinScore,
                              double imgMaxScore) const
 {
@@ -279,29 +279,29 @@ cv::Mat TemplateII::getHeatMap(const cv::Mat & scores,
   return result;
 }
 
-double TemplateII::getBoundaryHalfWidth(float radius)
+double ObjectByII::getBoundaryHalfWidth(float size)
 {
-  return std::min(radius * boundaryFactor, radius + maxBoundaryThickness);
+  return std::min(size * boundaryFactor, size + maxBoundaryThickness);
 }
 
-cv::Rect_<float> TemplateII::getBoundaryPatch(int x, int y, float radius)
+cv::Rect_<float> ObjectByII::getBoundaryPatch(int x, int y, float size)
 {
   // Creating boundary patch
   cv::Point2f center(x,y);
-  double halfWidth = getBoundaryHalfWidth(radius);
+  double halfWidth = getBoundaryHalfWidth(size);
   cv::Point2f halfSize(halfWidth, halfWidth);
   return cv::Rect_<float>(center - halfSize, center + halfSize);
 }
 
-cv::Rect_<float> TemplateII::getInnerPatch(int x, int y, float radius)
+cv::Rect_<float> ObjectByII::getInnerPatch(int x, int y, float size)
 {
   // Creating boundary patch
   cv::Point2f center(x,y);
-  return cv::Rect_<float>(center - cv::Point2f(radius,radius), center + cv::Point2f(radius,radius));
+  return cv::Rect_<float>(center - cv::Point2f(size,size), center + cv::Point2f(size,size));
 }
 
 
-double TemplateII::getPatchScore(const cv::Rect & patch,
+double ObjectByII::getPatchScore(const cv::Rect & patch,
                                const cv::Mat & integralImage) {
   // Use cropped rectangle if it is outside the image.
   cv::Rect cropped = Utils::cropRect(patch, cv::Size(cols,rows));
@@ -325,17 +325,18 @@ double TemplateII::getPatchScore(const cv::Rect & patch,
   return (A + D - B - C) / area;
 }
 
-double TemplateII::getCandidateScore(int center_x, int center_y, double radius,
+// Modify this function
+double ObjectByII::getCandidateScore(int center_x, int center_y, double size,
                                    const cv::Mat & yImg, const cv::Mat & greenImg) {
+
+  // Modify here
   // Computing inner patches
-  cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x, center_y, radius);
-  cv::Rect_<float> innerPatch = getInnerPatch(center_x, center_y, radius);
+  cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x, center_y, size);
+  cv::Rect_<float> innerPatch = getInnerPatch(center_x, center_y, size);
 
   // Abreviations are the following:
-  // ia: inner above
-  // ib: inner below
+  // i : boundary
   // b : boundary
-  // ub: upper boundary
 
   // Computing y_score
   double y_b  = getPatchScore(boundaryPatch, yImg);
@@ -350,7 +351,7 @@ double TemplateII::getCandidateScore(int center_x, int center_y, double radius,
   return (yWeight * y_score + greenWeight * green_score) / (yWeight + greenWeight);
 }
 
-void TemplateII::fillScore(cv::Mat & img, int score,
+void ObjectByII::fillScore(cv::Mat & img, int score,
                          int start_x, int end_x,
                          int start_y, int end_y)
 {

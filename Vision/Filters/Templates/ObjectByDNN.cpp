@@ -1,4 +1,4 @@
-#include "Filters/Template/TemplateDNN.hpp"
+#include "ObjectByDNN.hpp"
 
 #include "Filters/Patches/PatchProvider.hpp"
 #include "Utils/RotatedRectUtils.hpp"
@@ -51,14 +51,14 @@ static void patchToNN(const cv::Mat & patch,
 namespace Vision {
 namespace Filters {
 
-TemplateDNN::TemplateDNN() : GoalProvider("TemplateDNN"),
+ObjectByDNN::ObjectByDNN() : ObjectProvider("ObjectByDNN"),
                          arch_path("arch.json"),
                          weights_path("weights.data")
 {
 }
 
 
-void TemplateDNN::setParameters()
+void ObjectByDNN::setParameters()
 {
   debugLevel = ParamInt(0,0,1);
   scoreThreshold = ParamFloat(0.5,0.01,1.0);
@@ -67,10 +67,10 @@ void TemplateDNN::setParameters()
   params()->define<ParamFloat>("scoreThreshold", &scoreThreshold);
 }
 
-std::string TemplateDNN::getClassName() const {
-  return "TemplateDNN";
+std::string ObjectByDNN::getClassName() const {
+  return "ObjectByDNN";
 }
-Json::Value TemplateDNN::toJson() const
+Json::Value ObjectByDNN::toJson() const
 {
   Json::Value v = Filter::toJson();
   v["arch_path"] = arch_path;
@@ -78,7 +78,7 @@ Json::Value TemplateDNN::toJson() const
   return v;
 }
 
-void TemplateDNN::fromJson(const Json::Value & v, const std::string & dir_name)
+void ObjectByDNN::fromJson(const Json::Value & v, const std::string & dir_name)
 {
   Filter::fromJson(v, dir_name);
   rhoban_utils::tryRead(v,"arch_path",&arch_path);
@@ -87,11 +87,11 @@ void TemplateDNN::fromJson(const Json::Value & v, const std::string & dir_name)
   updateNN();
 }
 
-int TemplateDNN::expectedDependencies() const {
+int ObjectByDNN::expectedDependencies() const {
   return 1;
 }
 
-void TemplateDNN::updateNN()
+void ObjectByDNN::updateNN()
 {
   // load the architecture of the model in json format
   nn.load(arch_path, tiny_dnn::content_type::model, tiny_dnn::file_format::json);
@@ -99,7 +99,7 @@ void TemplateDNN::updateNN()
   nn.load(weights_path, tiny_dnn::content_type::weights, tiny_dnn::file_format::binary);
 }
 
-double TemplateDNN::getScore(const cv::Mat & patch)
+double ObjectByDNN::getScore(const cv::Mat & patch)
 {
   tiny_dnn::vec_t data;
 
@@ -116,9 +116,9 @@ double TemplateDNN::getScore(const cv::Mat & patch)
   return res[1];
 }
 
-void TemplateDNN::process() {
+void ObjectByDNN::process() {
 
-  clearGoalsData();
+  clearObjectsData();
 
   cv::Mat output;
 
@@ -134,7 +134,7 @@ void TemplateDNN::process() {
     const std::vector<std::pair<float, cv::RotatedRect>> rois = dep.getRois();
 
     if (rois.size() != patches.size()) {
-      throw std::runtime_error("TemplateDNN:: number of rois does not match number of patches");
+      throw std::runtime_error("ObjectByDNN:: number of rois does not match number of patches");
     }
 
     if (debugLevel > 0) {
@@ -155,7 +155,7 @@ void TemplateDNN::process() {
       bool isValid = score > scoreThreshold;
 
       if (isValid) {
-        pushGoal(roi.center.x, roi.center.y, output);
+        pushObject(roi.center.x, roi.center.y, output);
         drawRotatedRectangle(output, roi, cv::Scalar(0,255,0), 2);
       }
       else {

@@ -1,18 +1,16 @@
 #pragma once
 
 #include <vector>
-#include "TemplateProvider.hpp"
+#include "ObjectProvider.hpp"
 
 #include "tiny_dnn/tiny_dnn.h"
 
 namespace Vision {
 namespace Filters {
 
-/// Simplest filter for detecting the ball
-/// - Takes a binary image as input and use the barycenter as a ball candidate
-class TemplateDNN : public GoalProvider {
+class ObjectByDNN : public ObjectProvider {
 public:
-  TemplateDNN();
+  ObjectByDNN();
 
   virtual std::string getClassName() const;
   virtual Json::Value toJson() const override;

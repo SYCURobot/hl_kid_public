@@ -16,9 +16,9 @@ namespace Filters {
  * Output:
  *   - An image of (rows, cols) where pixels are colored in red or blue depending on their value
  */
-class TemplateII : public Filter {
+class ObjectByII : public Filter {
 public:
-  TemplateII() : Filter("TemplateII") {}
+  ObjectByII() : Filter("ObjectByII") {}
 
   virtual std::string getClassName() const override;
   virtual int expectedDependencies() const override;
@@ -31,12 +31,12 @@ protected:
   cv::Mat getHeatMap(const cv::Mat & scores, double minScore, double maxScore) const;
 
 private:
-  /// Return the half width of the ROI given the ball radius.
+  /// Return the half width of the ROI given the object size.
   /// It takes boundaryFactor and maxBoundaryThickness in account
-  double getBoundaryHalfWidth(float radius);
+  double getBoundaryHalfWidth(float size);
   /// Return the patch associated to the boundary part of the ball at the given point
-  cv::Rect_<float> getBoundaryPatch(int x, int y, float radius);
-  cv::Rect_<float> getInnerPatch(int x, int y, float radius);
+  cv::Rect_<float> getBoundaryPatch(int x, int y, float size);
+  cv::Rect_<float> getInnerPatch(int x, int y, float size);
 
   /// Return the score of the patch given the provided integralImage
   /// If "I" is the image from which the integralImage was computed,
@@ -47,7 +47,7 @@ private:
 
   /// Return the score of a pixel, it can use the patchScore of several patchs.
   ///  Look BallByII for example.
-  double getCandidateScore(int center_x, int center_y, double radius,
+  double getCandidateScore(int center_x, int center_y, double size,
                            const cv::Mat & y_img, const cv::Mat & green_img);
 
   /// img should be CV_32SC1
@@ -62,14 +62,14 @@ private:
   /// Number of columns in the result image;
   int cols;
 
-  /// Usual size ratio between object radius and size of the ROI
+  /// Usual size ratio between object size and size of the ROI
   ParamFloat boundaryFactor;
 
   /// The maximal thickness of the border area around the object (usually grass)
   ParamFloat maxBoundaryThickness;
 
-  /// Minimal radius of the object in pixels for the size of image used
-  ParamFloat minRadius;
+  /// Minimal size of the object in pixels for the size of image used
+  ParamFloat minSize;
 
   /// Minimal score for considering that region of interest is acceptable
   /// Reminder: Scores are in [-255,510] (2 * B - I)

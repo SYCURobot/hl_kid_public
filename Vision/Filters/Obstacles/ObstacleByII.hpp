@@ -11,9 +11,6 @@ namespace Filters {
 /// The objective is to detect ROI which can contain robots
 ///
 /// Input:
-/// - GreenII: An integral image of (rows + 1, cols + 1) monochannel and at least 32 bits
-/// - BallWidth: An image of (rows, cols) monochannel (CV_32F)
-///   - Robot size is considered to be a multiple of the ball size
 ///
 /// Output:
 /// - An image of (rows, cols) where pixels are colored in blue or red depending on their score
