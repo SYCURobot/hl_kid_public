@@ -78,8 +78,11 @@ int main(int argc, char **argv)
     cmd.parse(argc, argv);
 
     if (RhIO::started()) {
-        std::cout << "WARNING: RhIO already started, can't change the port, if you" << std::endl;
-        std::cout << "         want to do it, recompile with RHIO_SERVER_AUTOSTART to OFF" << std::endl;
+      // std::cout << "WARNING: RhIO already started, can't change the port, if you" << std::endl;
+      //   std::cout << "         want to do it, recompile with RHIO_SERVER_AUTOSTART to OFF" << std::endl;
+      RhIO::stop();
+      std::cout << "Starting RhIO with port " << port.getValue() << std::endl;
+      RhIO::start(port.getValue());
     } else {
         std::cout << "Starting RhIO with port " << port.getValue() << std::endl;
         RhIO::start(port.getValue());
@@ -138,7 +141,7 @@ int main(int argc, char **argv)
     } catch(const std::string& exc) {
         cout << "ERROR: Server died with string exception "
              << endl << exc << endl;
-    } 
+    }
 #ifdef VISION_COMPONENT
     if(visionRobocup!=nullptr)
     {
