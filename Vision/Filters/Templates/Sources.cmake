@@ -1,5 +1,7 @@
 set (SOURCES
-  TemplateFactory.cpp
+  ObjectProvider.cpp
+  ObjectByII.cpp
   TemplateOpenCV.cpp
-  TemplateII.cpp
+  ObjectByDNN.cpp
+  TemplateFactory.cpp
 )
