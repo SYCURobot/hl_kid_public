@@ -300,7 +300,6 @@ cv::Rect_<float> ObjectByII::getInnerPatch(int x, int y, float size)
   return cv::Rect_<float>(center - cv::Point2f(size,size), center + cv::Point2f(size,size));
 }
 
-
 double ObjectByII::getPatchScore(const cv::Rect & patch,
                                const cv::Mat & integralImage) {
   // Use cropped rectangle if it is outside the image.
@@ -325,28 +324,75 @@ double ObjectByII::getPatchScore(const cv::Rect & patch,
   return (A + D - B - C) / area;
 }
 
+cv::Rect_<float> ObjectByII::getLeftBoundaryPatch(int x, int y, float size)
+{
+  // Creating boundary patch
+  cv::Point2f center(x,y);
+  double halfWidth = getBoundaryHalfWidth(size);
+  cv::Point2f tl(-halfWidth, -halfWidth);
+  cv::Point2f br(-size, halfWidth);
+  return cv::Rect_<float>(center + tl, center + br);
+}
+cv::Rect_<float> ObjectByII::getRightBoundaryPatch(int x, int y, float size)
+{
+  // Creating boundary patch
+  cv::Point2f center(x,y);
+  double halfWidth = getBoundaryHalfWidth(size);
+  cv::Point2f tl(size, -halfWidth);
+  cv::Point2f br(halfWidth, halfWidth);
+  return cv::Rect_<float>(center + tl, center + br);
+}
+cv::Rect_<float> ObjectByII::getTopBoundaryPatch(int x, int y, float size)
+{
+  // Creating boundary patch
+  cv::Point2f center(x,y);
+  double halfWidth = getBoundaryHalfWidth(size);
+  cv::Point2f tl(-halfWidth, -halfWidth);
+  cv::Point2f br(halfWidth, -size);
+  return cv::Rect_<float>(center + tl, center + br);
+}
+cv::Rect_<float> ObjectByII::getBottomBoundaryPatch(int x, int y, float size)
+{
+  // Creating boundary patch
+  cv::Point2f center(x,y);
+  double halfWidth = getBoundaryHalfWidth(size);
+  cv::Point2f tl(-halfWidth, size);
+  cv::Point2f br(halfWidth, halfWidth);
+  return cv::Rect_<float>(center + tl, center + br);
+}
+
 // Modify this function
 double ObjectByII::getCandidateScore(int center_x, int center_y, double size,
                                    const cv::Mat & yImg, const cv::Mat & greenImg) {
 
   // Modify here
   // Computing inner patches
-  cv::Rect_<float> boundaryPatch = getBoundaryPatch(center_x, center_y, size);
+  cv::Rect_<float> boundaryLeftPatch = getLeftBoundaryPatch(center_x, center_y, size);
+  cv::Rect_<float> boundaryRightPatch = getRightBoundaryPatch(center_x, center_y, size);
+  cv::Rect_<float> boundaryTopPatch = getTopBoundaryPatch(center_x, center_y, size);
+  cv::Rect_<float> boundaryBottomPatch = getBottomBoundaryPatch(center_x, center_y, size);
   cv::Rect_<float> innerPatch = getInnerPatch(center_x, center_y, size);
 
   // Abreviations are the following:
-  // i : boundary
+  // i : inner
   // b : boundary
 
   // Computing y_score
-  double y_b  = getPatchScore(boundaryPatch, yImg);
+  double y_bl  = getPatchScore(boundaryLeftPatch, yImg);
+  double y_br  = getPatchScore(boundaryRightPatch, yImg);
+  double y_bt  = getPatchScore(boundaryTopPatch, yImg);
+  double y_bb  = getPatchScore(boundaryBottomPatch, yImg);
   double y_i = getPatchScore(innerPatch, yImg);
-  double y_score =  y_i - y_b;
 
   // Computing green_score
-  double green_b = getPatchScore(boundaryPatch, greenImg);
+  double green_bl  = getPatchScore(boundaryLeftPatch, greenImg);
+  double green_br  = getPatchScore(boundaryRightPatch, greenImg);
+  double green_bt  = getPatchScore(boundaryTopPatch, greenImg);
+  double green_bb  = getPatchScore(boundaryBottomPatch, greenImg);
   double green_i = getPatchScore(innerPatch, greenImg);
-  double green_score = green_b - green_i;
+
+  double y_score = (y_i - y_bl) + (y_i - y_br) + (y_i - y_bt) + (y_i - y_bb);
+  double green_score = (green_bl - green_i) + (green_br - green_i) + (green_bt - green_i) + (green_bb - green_i);
 
   return (yWeight * y_score + greenWeight * green_score) / (yWeight + greenWeight);
 }

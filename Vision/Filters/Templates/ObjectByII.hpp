@@ -37,6 +37,10 @@ private:
   /// Return the patch associated to the boundary part of the ball at the given point
   cv::Rect_<float> getBoundaryPatch(int x, int y, float size);
   cv::Rect_<float> getInnerPatch(int x, int y, float size);
+  cv::Rect_<float> getLeftBoundaryPatch(int x, int y, float size);
+  cv::Rect_<float> getRightBoundaryPatch(int x, int y, float size);
+  cv::Rect_<float> getTopBoundaryPatch(int x, int y, float size);
+  cv::Rect_<float> getBottomBoundaryPatch(int x, int y, float size);
 
   /// Return the score of the patch given the provided integralImage
   /// If "I" is the image from which the integralImage was computed,
