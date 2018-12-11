@@ -9,6 +9,7 @@
 #include "Localisation/Field/GoalObservation.hpp"
 #include "Localisation/Field/RobotController.hpp"
 #include "Localisation/Field/TagsObservation.hpp"
+#include "Localisation/Field/PenaltyMarkObservation.hpp"
 
 #include "Utils/Drawing.hpp"
 #include "Utils/Interface.h"
@@ -104,7 +105,7 @@ void LocalisationBinding::run()
       fieldLogger.log("Step time: %lf", elapsed);
       if (elapsed < period) {
         int sleep_us = (int)((period - elapsed) * 1000 * 1000);
-        // Sleep a total time of sleep_us by small intervals and interrupt if 
+        // Sleep a total time of sleep_us by small intervals and interrupt if
         // there is a reset pending
         int count = sleep_us/10000;
         for (int k=0; k<count; k++) {
@@ -174,7 +175,7 @@ void LocalisationBinding::initRhIO()
     "Reset the field particle filter at the custom position with custom noise [m,deg]",
     [this](const std::vector<std::string> &args) -> std::string {
       unsigned int k = 0;
-      
+
       auto rhioNode = &(RhIO::Root.child("/localisation/field/fieldPF"));
       for (string item : {"customX", "customY", "customTheta", "customNoise", "customThetaNoise"}) {
         if (args.size() > k) {
@@ -265,6 +266,8 @@ void LocalisationBinding::initRhIO()
   GoalObservation::bindWithRhIO();
   TagsObservation::bindWithRhIO();
   CompassObservation::bindWithRhIO();
+  ArenaCornerObservation::bindWithRhIO();
+
 
 }
 
@@ -273,6 +276,9 @@ void LocalisationBinding::importFromRhIO() {
   GoalObservation::importFromRhIO();
   TagsObservation::importFromRhIO();
   CompassObservation::importFromRhIO();
+  ArenaCornerObservation::importFromRhIO();
+
+
   field_filter->importFromRhIO();
 
   bind->pull();
@@ -309,7 +315,7 @@ void LocalisationBinding::step()
 
   // Get information from the referee
   bool refereeAllowTicks = refereeAllowsToPlay();
-  
+
   // When the robot is penalized do not update anything, but increase reactivity
   if (!refereeAllowTicks) {
     lastForbidden = currTS;
@@ -329,7 +335,7 @@ void LocalisationBinding::step()
     FieldPF::ResetType pending_reset = field_filter->getPendingReset();
     if (pending_reset == FieldPF::ResetType::Custom) {
       field_filter->applyPendingReset();
-    } 
+    }
 
     importFiltersResults();
     publishToLoc();
@@ -466,9 +472,45 @@ std::vector<GoalObservation *> LocalisationBinding::extractGoalObservations()
   return goalObservations;
 }
 
+
+std::vector<PenaltyMarkObservation *> LocalisationBinding::extractPenaltyMarkObservations()
+{
+  std::vector<PenaltyMarkObservation *> PenaltyMarkObservations;
+  // PenaltyMark Observations
+  for (size_t i = 0; i < penaltyMarksLocations.size(); i++) {
+    cv::Point2f pos_in_self = cs->getPosInSelf(penaltyMarksLocations[i]);
+    double robotHeight = cs->getHeight();
+
+    std::pair<Angle, Angle> panTiltToPenaltyMark;
+    panTiltToPenaltyMark = cs->panTiltFromXY(pos_in_self, robotHeight);
+    Angle panToPenaltyMark = panTiltToPenaltyMark.first;
+    Angle tiltToPenaltyMark = panTiltToPenaltyMark.second;
+    PenaltyMarkObservation * newObs = new PenaltyMarkObservation(panToPenaltyMark, tiltToPenaltyMark, robotHeight);
+    // Adding new observation or merging based on similarity
+    bool has_similar = false;
+    for (PenaltyMarkObservation * PenaltyMarkObs : PenaltyMarkObservations) {
+      if (PenaltyMarkObservation::isSimilar(*newObs, *PenaltyMarkObs)) {
+        has_similar = true;
+        PenaltyMarkObs->merge(*newObs);
+      }
+    }
+    if (has_similar) {
+      delete(newObs);
+    }
+    else {
+      PenaltyMarkObservations.push_back(newObs);
+    }
+  }
+
+  return PenaltyMarkObservations;
+}
+
+
+
+
 std::vector<ArenaCornerObservation *>
 LocalisationBinding::extractArenaCornerObservations() {
-  // Introduction des observations des coins du terrain 
+  // Introduction des observations des coins du terrain
   std::vector<ArenaCornerObservation *> arenaCornerObservations;
   if (debugLevel > 0) {
     fieldLogger.log("retrieving arenaCornerObs : %d\n", (int)clipping_data.size());
@@ -492,7 +534,7 @@ LocalisationBinding::extractArenaCornerObservations() {
   }
   return arenaCornerObservations;
 }
-  
+
 std::vector<TagsObservation *> LocalisationBinding::extractTagsObservations()
 {
   std::vector<TagsObservation *> tagsObservations;
@@ -552,6 +594,8 @@ void LocalisationBinding::stealFromVision()
   // Stealing data
   double tagTimestamp = 0;// Unused
   goalsLocations = vision_binding->stealGoals();
+  penaltyMarksLocations = vision_binding->stealPenaltyMark();
+
   vision_binding->stealTags(markerIndices, markerPositions,
                             markerCenters, markerCentersUndistorded, &tagTimestamp);
   vision_binding->stealCompasses(compassOrientations,compassQuality);
@@ -569,6 +613,8 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
   std::vector<GoalObservation *> goalObservations;
   std::vector<TagsObservation *> tagsObservations;
   std::vector<CompassObservation *> compassObservations;
+  std::vector<PenaltyMarkObservation *> penaltyMarkObservations;
+
 
   if (isUsingVisualCompass) {
     for(CompassObservation *obs: extractCompassObservations()) {
@@ -613,6 +659,17 @@ LocalisationBinding::ObservationVector LocalisationBinding::extractObservations(
       }
       obsId++;
     }
+
+    for (PenaltyMarkObservation * obs : extractPenaltyMarkObservations()) {
+      fieldObservations.push_back(obs);
+      if (debugLevel > 0) {
+        fieldLogger.log("Penaltymark %d -> pan: %lf, tilt: %lf, weight: %1lf",
+                        obsId, obs->pan.getSignedValue(),
+                        obs->tilt.getSignedValue(), obs->weight);
+      }
+      obsId++;
+    }
+
   }
 
   // Add field observation, but only if we have some other observations
@@ -758,7 +815,7 @@ void LocalisationBinding::applyWatcher(
       stepDeltaScore += consistencyGoodObsGain;
     } else {
       stepDeltaScore -= consistencyBadObsCost;
-    }      
+    }
   }
 
   /// Update consistency score

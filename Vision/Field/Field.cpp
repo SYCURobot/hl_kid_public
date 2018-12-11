@@ -223,6 +223,10 @@ const std::vector<Segment> &Field::getLines() { return getField()->fieldLines; }
 
 const std::vector<Segment> &Field::getGoals() { return getField()->goals; }
 
+std::vector<cv::Point2f> Field::getPenaltyMarks() { return {getField()->fieldMarks[1], getField()->fieldMarks[2]}; }
+
+
+
 const std::vector<ParametricLine> &Field::getArenaBorders() {
   return getField()->arenaBorders;
 }

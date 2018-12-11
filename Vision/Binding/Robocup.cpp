@@ -16,6 +16,8 @@
 #include "Filters/Features/CompassProvider.hpp"
 #include "Filters/Features/VisualCompass.hpp"
 #include "Filters/Custom/FieldBorderData.hpp"
+#include "Filters/Templates/ObjectProvider.hpp"
+
 
 #include "Filters/Features/TagsDetector.hpp"
 #include "Filters/Goal/GoalProvider.hpp"
@@ -101,6 +103,8 @@ Robocup::Robocup(MoveScheduler *scheduler)
   featureProviders["tags"] = std::vector<std::string>();
   featureProviders["compass"] = std::vector<std::string>();
   featureProviders["fieldBorder"] = std::vector<std::string>();
+  featureProviders["penaltyMark"] = std::vector<std::string>();
+
   initObservationTypes();
 
   for (std::string obs : observationTypes) {
@@ -149,6 +153,8 @@ Robocup::Robocup(const std::string &configFile, MoveScheduler *scheduler)
   featureProviders["tags"] = std::vector<std::string>();
   featureProviders["compass"] = std::vector<std::string>();
   featureProviders["fieldBorder"] = std::vector<std::string>();
+  featureProviders["penaltyMark"] = std::vector<std::string>();
+
   initObservationTypes();
 
   for (std::string obs : observationTypes) {
@@ -190,7 +196,7 @@ void Robocup::endLogging() {
   // Telling the low level to stop logging and to dump the info
   stopLoggingLowLevel(manual_logger.getSessionPath() + "/lowLevel.log");
   manual_logger.endSession();
-  // TODO: examine if logMutex can be closed earlier 
+  // TODO: examine if logMutex can be closed earlier
   logMutex.unlock();
 }
 
@@ -587,6 +593,7 @@ void Robocup::readPipeline() {
   std::vector<std::string> tagProviders = featureProviders["tags"];
   std::vector<std::string> fieldBorderProviders = featureProviders["fieldBorder"];
   std::vector<std::string> compassProviders = featureProviders["compass"];
+  std::vector<std::string> penaltyMarkProviders = featureProviders["penaltyMark"];
 
   // Goals:
   goalsMutex.lock();
@@ -618,6 +625,40 @@ void Robocup::readPipeline() {
     }
   }
   goalsMutex.unlock();
+
+  // PenaltyMark:
+  penaltyMarkMutex.lock();
+  for (const std::string &provider_name : penaltyMarkProviders) {
+    try {
+      const Filters::ObjectProvider &provider =
+        dynamic_cast<const Filters::ObjectProvider &>(
+          pipeline.get(provider_name));
+      std::vector<double> providerPenaltyMarkX = provider.getObjectsX();
+      std::vector<double> providerPenaltyMarkY = provider.getObjectsY();
+      // Converting the goal from image basis to "origin" basis
+      // and adding it to detected penaltyMark
+      for (size_t id = 0; id < providerPenaltyMarkX.size(); id++) {
+        double penaltyMark_x = providerPenaltyMarkX[id];
+        double penaltyMark_y = providerPenaltyMarkY[id];
+        detectedPenaltyMarks.push_back(cs->robotPosFromImg(
+                                         penaltyMark_x, penaltyMark_y, 1, 1, false)); // false=invariant world reference
+        // frame (which integrates the
+        // odometry)
+      }
+    } catch (const std::bad_cast &e) {
+
+      std::cerr
+        << "Failed to import penaltyMark positions, check pipeline. Exception = "
+        << e.what() << std::endl;
+    } catch (const std::runtime_error &exc) {
+      std::cerr << "Robocup::readPipeline: ObjectProviders: runtime_error: "
+                << exc.what() << std::endl;
+    }
+  }
+  penaltyMarkMutex.unlock();
+
+
+
 
   // Ball
   for (const std::string &providerName : ballProviders) {
@@ -653,7 +694,7 @@ void Robocup::readPipeline() {
           positions.push_back(in_world);
         }
         robotFilter->newFrame(positions);
-  
+
         LocalisationService *loc = _scheduler->getServices()->localisation;
         std::vector<Eigen::Vector3d> filteredPositions;
         for (auto &candidate : robotFilter->getCandidates()) {
@@ -776,7 +817,7 @@ void Robocup::readPipeline() {
   }
   // /TEMP /TEMP
   clippingMutex.unlock();
-  
+
   // VisualCompass
   compassMutex.lock();
   if (compassProviders.size() > 1) {
@@ -993,7 +1034,7 @@ void Robocup::updateBallInformations() {
       Point ball_pos_in_field = loc->worldToField(pos_in_world);
       Point robot_pos = loc->getFieldPos();
       double field_dir = normalizeRad(loc->getFieldOrientation());
-      
+
       Eigen::Vector2d tmp = pos_in_world.segment(0,2);
       cv::Point2f pos_in_self = cs->getPosInSelf(rg2cv2f(tmp));
       // Entry format:
@@ -1013,6 +1054,16 @@ std::vector<cv::Point2f> Robocup::stealGoals() {
   return goalsCopy;
 }
 
+std::vector<cv::Point2f> Robocup::stealPenaltyMark() {
+  penaltyMarkMutex.lock();
+  std::vector<cv::Point2f> penaltyMarksCopy = detectedPenaltyMarks;
+  detectedPenaltyMarks.clear();
+  penaltyMarkMutex.unlock();
+
+  return penaltyMarksCopy;
+}
+
+
 std::vector<Filters::FieldBorderData> Robocup::stealClipping() {
   clippingMutex.lock();
   std::vector<Filters::FieldBorderData> clippingCopy = clipping_data;
@@ -1020,7 +1071,7 @@ std::vector<Filters::FieldBorderData> Robocup::stealClipping() {
   clippingMutex.unlock();
   return clippingCopy;
 }
-  
+
 void Robocup::stealTags(std::vector<int> &indices,
                         std::vector<Eigen::Vector3d> &positions,
                         std::vector<std::pair<float, float>> &centers,
@@ -1128,7 +1179,7 @@ cv::Mat Robocup::getTaggedImg(int width, int height) {
         cv::line(img, pos, futur_pos, cv::Scalar(255, 255, 0), 2);
       }
   }
-  
+
   {
       // Drawing candidates of robots
       auto candidates = robotFilter->getCandidates();
@@ -1348,7 +1399,7 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
         robot = detectedRobots[index];
         std::cout << "New robot seen at (origin frame) " << robot << std::endl;
         freshObservations.push_back(robot);
-      } 
+      }
     } else {
       // Unhandled observation type
       continue;
@@ -1505,7 +1556,7 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
     //TODO, this function should take into account the size of a standard robot and hide any candidate that should be behind another robot
     return robots;
   }
-  
+
 void Robocup::run() { launch(); }
 
 void Robocup::closeCamera() {
@@ -1530,12 +1581,12 @@ bool Robocup::isFakeMode() const{
   return _scheduler->getServices()->model->isFakeMode();
 }
 
-void Robocup::ballClear() { 
-    ballStackFilter->clear(); 
+void Robocup::ballClear() {
+  ballStackFilter->clear();
 }
 
-void Robocup::robotsClear() { 
-    robotFilter->clear();
+void Robocup::robotsClear() {
+  robotFilter->clear();
 }
 
 void Robocup::ballReset(float x, float y) {

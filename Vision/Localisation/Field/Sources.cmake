@@ -9,4 +9,5 @@ set(SOURCES
     FieldPosition.cpp
     RobotController.cpp
     CompassObservation.cpp
+    PenaltyMarkObservation.cpp
 )

@@ -32,7 +32,7 @@ public:
   static const std::vector<rhoban_geometry::ParametricLine> &getArenaBorders();
   static std::vector<cv::Point2f> getGoalPosts();
   static std::vector<cv::Point2f> getArenaCorners();
-
+  static std::vector<cv::Point2f> getPenaltyMarks();
   static const std::map<int,cv::Point3f> & getTags();
 
   /**

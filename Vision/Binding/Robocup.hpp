@@ -92,7 +92,7 @@ private:
   void initImageHandlers();
 
   void initObservationTypes();
-  
+
   void initRhIO();
   void publishToRhIO();
   void importFromRhIO();
@@ -166,7 +166,11 @@ public:
 
   /// Get all goals currently stored and remove them from the list
   std::vector<cv::Point2f> stealGoals();
-  
+
+  /// Get all penalty marks currently stored and remove them from the list
+  std::vector<cv::Point2f> stealPenaltyMark();
+
+
   /// Lock mutex on tags, retrieve indices and position of tags
   /// Finally clear all memory about tags
   void stealTags(std::vector<int> & indices,
@@ -202,7 +206,7 @@ public:
 
   //TODO : move this into radar refactoring
   std::vector<cv::Point2f> keepFrontRobots(std::vector<cv::Point2f> & robots);
-  
+
   void closeCamera();
 
   /// Uses MoveScheduler to check current mode (fake or active)
@@ -247,9 +251,12 @@ private:
   /// Detected positions for goals in "origin" basis
   std::vector<cv::Point2f> detectedGoals;
 
+  /// Detected penalty marks in the "origin" basis
+  std::vector<cv::Point2f> detectedPenaltyMarks;
+
   /// Detected robots in "origin" basis
   std::vector<cv::Point2f> detectedRobots;
-  
+
   std::vector<std::string> observationTypes;
 
   /// For each type of observation, the map contains a list of
@@ -262,6 +269,9 @@ private:
 
   /// Controls access to the clipping
   mutable std::mutex clippingMutex;
+
+  /// Controls access to the penalty mark
+  mutable std::mutex penaltyMarkMutex;
 
   /// Indexes of the tags detected
   std::vector<int> detectedTagsIndices;
@@ -294,7 +304,7 @@ private:
 
   // clipping data for the localisation
   std::vector<Vision::Filters::FieldBorderData> clipping_data;
-  
+
   /// Was robot handled at previous step
   bool wasHandled;
 

@@ -19,6 +19,7 @@ class CompassObservation;
 class FieldPF;
 class GoalObservation;
 class TagsObservation;
+class PenaltyMarkObservation;
 }
 namespace Utils {
 class CameraState;
@@ -57,6 +58,7 @@ public:
   void stealFromVision();
 
   std::vector<Localisation::GoalObservation *> extractGoalObservations();
+  std::vector<Localisation::PenaltyMarkObservation *> extractPenaltyMarkObservations();
   std::vector<Localisation::TagsObservation *> extractTagsObservations();
   std::vector<Localisation::CompassObservation *> extractCompassObservations();
   std::vector<Localisation::ArenaCornerObservation *> extractArenaCornerObservations();
@@ -153,6 +155,9 @@ public:
 
   /// Locations of the goals
   std::vector<cv::Point2f> goalsLocations;
+
+  /// Locations of the penalty marks
+  std::vector<cv::Point2f> penaltyMarksLocations;
 
   /// Indices of markers
   std::vector<int> markerIndices;
