@@ -267,6 +267,7 @@ void LocalisationBinding::initRhIO()
   TagsObservation::bindWithRhIO();
   CompassObservation::bindWithRhIO();
   ArenaCornerObservation::bindWithRhIO();
+  PenaltyMarkObservation::bindWithRhIO();
 
 
 }
@@ -277,6 +278,7 @@ void LocalisationBinding::importFromRhIO() {
   TagsObservation::importFromRhIO();
   CompassObservation::importFromRhIO();
   ArenaCornerObservation::importFromRhIO();
+  PenaltyMarkObservation::importFromRhIO();
 
 
   field_filter->importFromRhIO();
