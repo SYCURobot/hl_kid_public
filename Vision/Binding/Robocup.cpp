@@ -388,7 +388,7 @@ void Robocup::initRhIO() {
 
 void Robocup::initObservationTypes() {
   observationTypes = {"ball", "post",   "team_mate", "opponent",
-                      "t",    "corner", "tag", "clipping", "compass"};
+                      "t",    "corner", "tag", "clipping", "compass", "penalty_mark"};
 }
 
 void Robocup::finish() {
@@ -1255,6 +1255,8 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
   cv::Scalar ball_color = cv::Scalar(0, 0, 200);
   int goal_size = 8;//px
   cv::Scalar goal_color = cv::Scalar(200, 0, 0);
+  cv::Scalar pm_color = cv::Scalar(200, 200, 200);
+  int pm_size=18;
   //int robot_size = 20;
   //cv::Scalar robot_color = cv::Scalar(255, 0, 255);
   float discount = 0.05;
@@ -1392,7 +1394,8 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
           }
         }
       }
-    } else if (obsType == "opponent") {
+    }
+    else if (obsType == "opponent") {
       // Reading posts
       cv::Point2f robot;
       for (unsigned int index = 0; index < detectedRobots.size(); index++) {
@@ -1400,10 +1403,20 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
         std::cout << "New robot seen at (origin frame) " << robot << std::endl;
         freshObservations.push_back(robot);
       }
-    } else {
-      // Unhandled observation type
-      continue;
     }
+    else if (obsType == "penalty_mark") {
+      // Reading penaltymark
+      cv::Point2f pm;
+      for (unsigned int index = 0; index < detectedPenaltyMarks.size(); index++) {
+        pm = detectedPenaltyMarks[index];
+        std::cout<< "New penalty mark seen at "<<pm << std::endl;
+        freshObservations.push_back(pm);
+      }
+    }
+    else {
+      // Unhandled observation type
+  continue;
+}
 
     // Adding the observations to the old ones if need be, and updating the
     // intensities
@@ -1448,7 +1461,27 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
 
         cv::circle(img, robot_in_self, 15, cv::Scalar(200, 0, 200), -1);
       }
-    } else if (obsType == "ball") {
+    }
+    else if (obsType == "penalty_mark") {
+      for (unsigned int i = 0; i < storedObservations.size(); i++) {
+        // Going from meters to pixels, and from the origin frame to the robot
+        // one
+        cv::Point2f pm_in_self =
+          cs->getPosInSelf(storedObservations[i].first);
+        pm_in_self.x =
+          max(0, (int)(pm_in_self.x * scale_factor + width / 2));
+        pm_in_self.y =
+          max(0, (int)(-pm_in_self.y * scale_factor + height / 2));
+
+        cv::Point2i second_point(pm_in_self.x + pm_size,
+                                 pm_in_self.y + pm_size);
+
+        cv::rectangle(img, pm_in_self, second_point, pm_color, -1);
+
+      }
+    }
+
+    else if (obsType == "ball") {
       for (unsigned int i = 0; i < storedObservations.size(); i++) {
         // Going from meters to pixels, and from the origin frame to the robot
         // one
@@ -1478,7 +1511,9 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
                                  goal_in_self.y + goal_size / 2);
         cv::rectangle(img, goal_in_self, second_point, goal_color, -1);
       }
-    } else if (obsType == "tag") {
+    }
+
+    else if (obsType == "tag") {
       for (unsigned int i = 0; i < storedObservations.size(); i++) {
         // Going from meters to pixels, and from the origin frame to the robot
         // one
@@ -1491,61 +1526,61 @@ cv::Mat Robocup::getRadarImg(int width, int height) {
 
         cv::circle(img, tag_in_self, 5, cv::Scalar(0, 0, 0), -1);
       }
-    } else if (obsType == "compass") {
-      for (unsigned int i = 0; i < storedObservations.size(); i++) {
-        cv::Point2f opponent = storedObservations[i].first;
-        cv::Point2f tmp;
+} else if (obsType == "compass") {
+  for (unsigned int i = 0; i < storedObservations.size(); i++) {
+    cv::Point2f opponent = storedObservations[i].first;
+    cv::Point2f tmp;
 
-        Angle goalDirInWorld(opponent.x);
+    Angle goalDirInWorld(opponent.x);
 
-        // trick store angle and quality
-        Angle trunkYaw =
-          cs->getTrunkYawInWorld(); // yaw of the trunk in the world
+    // trick store angle and quality
+    Angle trunkYaw =
+      cs->getTrunkYawInWorld(); // yaw of the trunk in the world
 
-        Angle goalDirInSelf = goalDirInWorld - trunkYaw;
-        // opponentGoal uses offset but has inverted sign with robot
-        // orientation
-        Angle oppGoalDirInSelf =
-          -CompassObservation::compassToField(goalDirInSelf);
+    Angle goalDirInSelf = goalDirInWorld - trunkYaw;
+    // opponentGoal uses offset but has inverted sign with robot
+    // orientation
+    Angle oppGoalDirInSelf =
+      -CompassObservation::compassToField(goalDirInSelf);
 
-        double x = cos(oppGoalDirInSelf) * 10.0;
-        double y = sin(oppGoalDirInSelf) * 10.0;
+    double x = cos(oppGoalDirInSelf) * 10.0;
+    double y = sin(oppGoalDirInSelf) * 10.0;
 
-        tmp.x = max(0, (int)(x * scale_factor + width / 2));
-        tmp.y = max(0, (int)(-y * scale_factor + height / 2));
+    tmp.x = max(0, (int)(x * scale_factor + width / 2));
+    tmp.y = max(0, (int)(-y * scale_factor + height / 2));
 
-        cv::Point2i center(width / 2, height / 2);
-        cv::Scalar lineColor(0, 0, 255 * opponent.y); // quality is in y
-        cv::line(img, center, tmp, lineColor, 1);
-      }
-    } else if (obsType == "clipping") {
-      int idx = 0;
-      while (idx < (int)storedObservations.size()) {
-        int start_idx = idx;
-        int line_nb = (int)storedObservations[idx].first.x;
-        int has_corner = (int)storedObservations[idx].first.y;
-        idx++;
-        for (int k = 0; k < line_nb; k++) {
-          if (idx >= (int)storedObservations.size() - 1) break;  // au cas où ...
-          cv::Point2f A = cs->getPosInSelf(storedObservations[idx].first);
-          cv::Point2f B = cs->getPosInSelf(storedObservations[idx + 1].first);
-          A.x = max(0, (int)(A.x * scale_factor + width / 2));
-          A.y = max(0, (int)(-A.y * scale_factor + height / 2));
-          B.x = max(0, (int)(B.x * scale_factor + width / 2));
-          B.y = max(0, (int)(-B.y * scale_factor + height / 2));
-          cv::line(img, A, B, cv::Scalar::all(255), 2);
-          idx += 2;
-        }
-        if (idx >= (int)storedObservations.size()) break;  // au cas où ...
-        if (has_corner && idx == start_idx + line_nb * 2 + 1) {
-          cv::Point2f C = cs->getPosInSelf(storedObservations[idx].first);
-          C.x = max(0, (int)(C.x * scale_factor + width / 2));
-          C.y = max(0, (int)(-C.y * scale_factor + height / 2));
-          cv::circle(img, C, 5, cv::Scalar(255, 255, 255), CV_FILLED);
-          idx++;
-        }
-      }
+    cv::Point2i center(width / 2, height / 2);
+    cv::Scalar lineColor(0, 0, 255 * opponent.y); // quality is in y
+    cv::line(img, center, tmp, lineColor, 1);
+  }
+} else if (obsType == "clipping") {
+  int idx = 0;
+  while (idx < (int)storedObservations.size()) {
+    int start_idx = idx;
+    int line_nb = (int)storedObservations[idx].first.x;
+    int has_corner = (int)storedObservations[idx].first.y;
+    idx++;
+    for (int k = 0; k < line_nb; k++) {
+      if (idx >= (int)storedObservations.size() - 1) break;  // au cas où ...
+      cv::Point2f A = cs->getPosInSelf(storedObservations[idx].first);
+      cv::Point2f B = cs->getPosInSelf(storedObservations[idx + 1].first);
+      A.x = max(0, (int)(A.x * scale_factor + width / 2));
+      A.y = max(0, (int)(-A.y * scale_factor + height / 2));
+      B.x = max(0, (int)(B.x * scale_factor + width / 2));
+      B.y = max(0, (int)(-B.y * scale_factor + height / 2));
+      cv::line(img, A, B, cv::Scalar::all(255), 2);
+      idx += 2;
     }
+    if (idx >= (int)storedObservations.size()) break;  // au cas où ...
+    if (has_corner && idx == start_idx + line_nb * 2 + 1) {
+      cv::Point2f C = cs->getPosInSelf(storedObservations[idx].first);
+      C.x = max(0, (int)(C.x * scale_factor + width / 2));
+      C.y = max(0, (int)(-C.y * scale_factor + height / 2));
+      cv::circle(img, C, 5, cv::Scalar(255, 255, 255), CV_FILLED);
+      idx++;
+    }
+  }
+}
   }
   globalMutex.unlock();
 
