@@ -191,7 +191,7 @@ CaptainService::Instruction CaptainService::getInstruction()
     Instruction instruction;
     auto tmp = getInfo();
     
-    if (id >= 1 && id < CAPTAIN_MAX_ID) {
+    if (id >= 1 && id <= CAPTAIN_MAX_ID) {
         instruction.targetPosition = Point(tmp.robotTarget[id-1][0], tmp.robotTarget[id-1][1]);
         instruction.targetOrientation = tmp.robotTarget[id-1][2];
         instruction.order = tmp.order[id-1];
